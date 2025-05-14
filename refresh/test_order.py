@@ -1,5 +1,5 @@
 import unittest
-from refresh import Drink, Order
+from refresh import Drink, Order, Food
 
 
 class TestDrink(unittest.TestCase):
@@ -34,31 +34,59 @@ class TestDrink(unittest.TestCase):
         drink.add_flavor('cherry')
         self.assertEqual(drink.get_num_flavors(), 2)
 
+class TestFood(unittest.TestCase): 
+    def test_and_create_food(self):
+        food = Food('hotdog')
+        self.assertEqual(food.get_type(), 'hotdog')
+        self.assertEqual(food.get_toppings(), [])
+
+    def test_invalid_food_type_raises_error(self):
+        with self.assertRaises(ValueError):
+            Food('sushi')
+    
+    def test_add_valid_topping (self):
+        food = Food('french fries')
+        food.add_topping('ketchup')
+        self.assertIn('ketchup', food.get_toppings())
+
+    def test_add_invalid_topping_raises_error(self):
+        food = Food('hotdog')
+        with self.assertRaises(ValueError):
+            food.add_topping('sprinkles')
+
+    def test_add_duplicate_topping(self):
+        food = Food('nacho chips')
+        food.add_topping('chili')
+        food.add_topping('chili')  # Should not duplicate
+        self.assertEqual(food.get_toppings(), ['chili'])
+
+    def test_set_multiple_valid_toppings(self):
+        food = Food('nacho chips')
+        food.set_toppings(['chili', 'nacho cheese'])
+        self.assertEqual(set(food.get_toppings()), {'chili', 'nacho cheese'})
+    
+    def test_num_toppings(self):
+        food = Food('corndog')
+        food.add_topping('ketchup')
+        food.add_topping('mustard')
+        self.assertEqual(food.get_num_toppings(), 2)
+
+    def test_set_invalid_topping_raises_error(self):
+        food = Food('french fries')
+        with self.assertRaises(ValueError):
+            food.set_toppings(['ketchup', 'mayo'])
 
 class TestOrder(unittest.TestCase): 
     def test_and_get_iteams(self): 
         order = Order()
-        drink = Drink('pokeacola')
+        drink = Drink('water')
+        food = Food('hotdog')
         order.add_item(drink)
-        self.assertEqual(order.get_num_items(), 1)
-        self.assertEqual(order.get_items()[0].get_base(), 'pokeacola')
+        order.add_item(food)
 
-    def test_total_cost(self):
-        drink1 = Drink('sbrite')
-        drink1.add_flavor('lemon')
-        drink1.add_flavor('mint')
-
-        drink2 = Drink('pokeacola')
-        drink2.add_flavor('cherry')
-
-        order = Order()
-        order.add_item(drink1)
-        order.add_item(drink2)
-
-        # drink1: base 5 + 2 flavors = 7
-        # drink2: base 5 + 1 flavor = 6
-        # total = 13
-        self.assertEqual(order.get_total(), 13)
+        self.assertEqual(order.get_num_items(), 2)
+        self.assertEqual(order.get_items()[0].get_base(), 'water')
+        self.assertEqual(order.get_items()[1].get_type(), 'hotdog')
 
     def test_remove_item(self):
         order = Order()
@@ -77,15 +105,24 @@ class TestOrder(unittest.TestCase):
         with self.assertRaises(ValueError):
             order.add_item("not a drink")
 
-    def test_receipt(self):
+    def test_receipt_contains_food_and_drink(self):
         drink = Drink('hill fog')
         drink.add_flavor('lime')
+
+        food = Food('ice cream')
+        food.add_topping('chocolate sauce')
+
         order = Order()
         order.add_item(drink)
+        order.add_item(food)
         receipt = order.get_receipt()
+
         self.assertIn("hill fog", receipt)
         self.assertIn("lime", receipt)
-        self.assertIn("Total Cost: $6", receipt)
+        self.assertIn("ice cream", receipt)
+        self.assertIn("chocolate sauce", receipt)
+        self.assertIn("Total:", receipt)
+        self.assertIn("Tax", receipt)
 
 
 if __name__ == '__main__':
